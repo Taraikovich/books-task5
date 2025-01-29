@@ -104,7 +104,7 @@ export default function Home() {
                   onChange={(e) => {
                     setBooks([]);
                     setSeedShift(0);
-                    setLaguage(e.target.value);
+                    setLaguage(e.target.value as 'fr' | 'en' | 'ru');
                   }}
                 >
                   <option value="en">English (EN)</option>
