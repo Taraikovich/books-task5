@@ -94,16 +94,18 @@ export async function createBooks(
   lang: 'fr' | 'en' | 'ru' = 'en',
   likesCount: number,
   reviewCount: number,
-  bookCount = 10
+  page = 1,
+  booksPerPage = 10
 ): Promise<Book[]> {
+  const shift = seed + booksPerPage * page;
   const faker = setFaker(lang);
 
-  const bookData = Array.from({ length: bookCount }, (_, i) =>
-    createBookData(faker, seed + i)
+  const bookData = Array.from({ length: booksPerPage }, (_, i) =>
+    createBookData(faker, shift + i)
   );
 
-  const likesPerBook = createLikesArray(seed, bookCount, likesCount);
-  const reviewData = createReviewData(faker, seed, bookCount, reviewCount);
+  const likesPerBook = createLikesArray(shift, booksPerPage, likesCount);
+  const reviewData = createReviewData(faker, shift, booksPerPage, reviewCount);
 
   const books = bookData.map((book, i) => ({
     ...book,

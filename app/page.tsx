@@ -2,7 +2,7 @@
 
 import { createBooks, Book } from './lib/actions';
 import React, { useEffect, useState } from 'react';
-import { useDebounce } from 'use-debounce';
+import { useInView } from 'react-intersection-observer';
 import {
   Table,
   Form,
@@ -18,70 +18,25 @@ import BookDescription from './ui/BookDescription';
 export default function Home() {
   const [books, setBooks] = useState<Book[] | []>([]);
   const [showDescription, setShowDescription] = useState<number | undefined>();
-  const [loading, setLoading] = useState(false);
   const [language, setLaguage] = useState<'fr' | 'en' | 'ru'>('en');
   const [seed, setSeed] = useState(123456);
-  const [seedShift, setSeedShift] = useState(0);
+  const [page, setPage] = useState(1);
   const [likes, setLikes] = useState(10);
   const [reviews, setReviews] = useState(3);
-
-  const [value] = useDebounce(seed, 1000);
-  const currentSeed = value + seedShift;
-
-  console.log(currentSeed);
+  const { ref, inView } = useInView();
 
   useEffect(() => {
-    async function fetchBooks(booksCount = 10) {
-      const data = await createBooks(
-        currentSeed,
-        language,
-        likes,
-        reviews,
-        booksCount
-      );
-      setBooks((prevData) => [...prevData, ...data]);
-    }
-
-    if (books.length < 20) {
-      fetchBooks(20);
-    } else {
-      fetchBooks();
-    }
-    setLoading(false);
-  }, [currentSeed, likes, reviews, language]);
-
-  const handleScroll = () => {
-    if (
-      document.body.scrollHeight - 300 <
-      window.scrollY + window.innerHeight
-    ) {
-      setLoading(true);
-    }
-  };
-
-  function debounce(func: (...args: unknown[]) => void, delay: number) {
-    let timeoutId: NodeJS.Timeout;
-    return function (...args: unknown[]) {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        func(...args);
-      }, delay);
-    };
-  }
+    if (inView) setPage((prevPage) => prevPage + 1);
+  }, [inView]);
 
   useEffect(() => {
-    const handler = debounce(handleScroll, 500);
-    window.addEventListener('scroll', handler);
-    return () => window.removeEventListener('scroll', handler);
-  }, []);
-
-  useEffect(() => {
-    if (loading === true) {
-      setSeedShift((prevSeedShift) => prevSeedShift + 10);
+    async function fetchBooks() {
+      const data = await createBooks(seed, language, likes, reviews, page);
+      setBooks((prevData) => (page === 1 ? data : [...prevData, ...data]));
     }
-  }, [loading]);
+
+    fetchBooks();
+  }, [language, likes, page, reviews, seed]);
 
   return (
     <>
@@ -106,8 +61,7 @@ export default function Home() {
                   aria-label="Select language"
                   defaultValue={language}
                   onChange={(e) => {
-                    setBooks([]);
-                    setSeedShift(0);
+                    setPage(1);
                     setLaguage(e.target.value as 'fr' | 'en' | 'ru');
                   }}
                 >
@@ -127,8 +81,7 @@ export default function Home() {
                   type="number"
                   value={seed}
                   onChange={(e) => {
-                    setBooks([]);
-                    setSeedShift(0);
+                    setPage(1);
                     setSeed(Number(e.target.value));
                   }}
                 />
@@ -136,8 +89,7 @@ export default function Home() {
                   variant="dark"
                   style={{ position: 'absolute', top: '17%', left: '82%' }}
                   onClick={() => {
-                    setBooks([]);
-                    setSeedShift(0);
+                    setPage(1);
                     setSeed(Math.floor(Math.random() * 100000));
                   }}
                 >
@@ -154,8 +106,7 @@ export default function Home() {
                 step={0.1}
                 value={likes}
                 onChange={(e) => {
-                  setBooks([]);
-                  setSeedShift(0);
+                  setPage(1);
                   setLikes(Number(e.target.value));
                 }}
               />
@@ -171,8 +122,7 @@ export default function Home() {
                   value={reviews}
                   step={0.1}
                   onChange={(e) => {
-                    setBooks([]);
-                    setSeedShift(0);
+                    setPage(1);
                     setReviews(Number(e.target.value));
                   }}
                 />
@@ -218,7 +168,7 @@ export default function Home() {
           ))}
           <tr>
             <td colSpan={5} style={{ textAlign: 'center' }}>
-              <Button variant="dark" disabled>
+              <Button variant="dark" disabled ref={ref}>
                 <Spinner
                   as="span"
                   animation="grow"
