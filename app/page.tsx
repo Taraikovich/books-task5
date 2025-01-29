@@ -2,6 +2,7 @@
 
 import { createBooks, Book } from './lib/actions';
 import React, { useEffect, useState } from 'react';
+import { useDebounce } from 'use-debounce';
 import {
   Table,
   Form,
@@ -17,14 +18,17 @@ import BookDescription from './ui/BookDescription';
 export default function Home() {
   const [books, setBooks] = useState<Book[] | []>([]);
   const [showDescription, setShowDescription] = useState<number | undefined>();
-  const [seedShift, setSeedShift] = useState(0);
   const [loading, setLoading] = useState(false);
   const [language, setLaguage] = useState<'fr' | 'en' | 'ru'>('en');
   const [seed, setSeed] = useState(123456);
+  const [seedShift, setSeedShift] = useState(0);
   const [likes, setLikes] = useState(10);
   const [reviews, setReviews] = useState(3);
 
-  const currentSeed = seed + seedShift;
+  const [value] = useDebounce(seed, 1000);
+  const currentSeed = value + seedShift;
+
+  console.log(currentSeed);
 
   useEffect(() => {
     async function fetchBooks(booksCount = 10) {
